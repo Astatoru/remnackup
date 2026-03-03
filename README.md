@@ -103,6 +103,7 @@ docker compose --file /path/to/compose.yaml up --detach remnawave-db
 tar --extract --file /path/to/database-$DATE.tar.gz
 ```
 - Restore database
+    - Replace `--user "postgres"` and `--dbname "postgres"` according to your `.env` file (`postgres` value is default)
 ```bash
 docker exec remnawave-db psql --user "postgres" --dbname "postgres" < /path/to/database-$DATE.dump
 ```

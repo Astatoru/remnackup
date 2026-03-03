@@ -43,7 +43,7 @@ BACKUPDB=ON bash /path/to/remnackup
 ```bash
 BACKUPDB=ON BACKUPCONFIG=ON bash /path/to/remnackup
 ```
-- Backup everything
+- Backup everything and push to remote repository
 ```bash
 ALL=ON REPOSITORY=/path/to/repository bash /path/to/remnackup
 ```
@@ -56,13 +56,13 @@ If you plan on backing up your settings to Github, you should do some preparatio
 - Create your own repository
 - If you want, you can login into your Github account on your VPS and entierly skip fine-grained token setup, but with token it's way more secure
 - Create Fine-grained token:
-	- **Account** > **Settings** > **Developer Settings**
-	- **Personal access tokens** > **Fine-grained tokens** > **Generate new token**
-	- Set token name and description
-	- Select the repository you have just created
-	- Add permissions:
-		- **Contents**: Access: Read and write
-	- Copy the token
+    - **Account** > **Settings** > **Developer Settings**
+    - **Personal access tokens** > **Fine-grained tokens** > **Generate new token**
+    - Set token name and description
+    - Select the repository you have just created
+    - Add permissions:
+        - **Contents**: Access: Read and write
+    - Copy the token
 - Ssh into your VPS
 - Install `gh` (Package name can be different between distributions)
 ```bash
@@ -73,9 +73,9 @@ apt install gh
 gh auth login
 ```
 - Select:
-	- **Github.com**
-	- **HTTPS**
-	- **Paste an authentication token**
+    - **Github.com**
+    - **HTTPS**
+    - **Paste an authentication token**
 - Paste your token
 - Configure `~/.gitconfig` (most likely not needed)
 ```bash

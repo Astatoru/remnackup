@@ -104,5 +104,5 @@ tar --extract --file /path/to/database-$DATE.tar.gz
 ```
 - Restore database
 ```bash
-docker exec remnawave-db psql --user "postgres" --dbname "postgres" < database-$DATE.dump
+docker exec remnawave-db psql --user "postgres" --dbname "postgres" < /path/to/database-$DATE.dump
 ```

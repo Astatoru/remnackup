@@ -1,0 +1,197 @@
+#!/usr/bin/env bash
+# vim:ft=bash
+
+# Display error messages
+error() {
+  local MESSAGE="$1"
+  # Check whether stderr is in interactive mode
+  if [[ -t 2 ]]; then
+    >&2 printf "%b\n" "\033[01;31mERROR\033[0m: $MESSAGE"
+  else
+    >&2 printf "%s\n" "ERROR: $MESSAGE"
+  fi
+}
+
+# Display info messages
+info() {
+  local MESSAGE="$1"
+  # Check whether stdout is in interactive mode
+  if [[ -t 1 ]]; then
+    printf "%b\n" "\033[01;34mINFO\033[0m: $MESSAGE"
+  else
+    printf "%s\n" "INFO: $MESSAGE"
+  fi
+}
+
+# Toggle root support
+declare ROOT=${ROOT:-OFF}
+
+if [[ "${ROOT^^}" = "OFF" ]]; then
+  # Don't start the script if it run under a root
+  if ((EUID == 0)); then
+    error "Running this script as root is discouraged, but you can disable this check using \"\$ROOT\" variable"
+    exit 1
+  fi
+fi
+
+# Script dependencies
+declare -a DEPENDENCIES=(docker tar gzip)
+
+# Check whether dependencies are installed
+for CMD in "${DEPENDENCIES[@]}"; do
+  if [[ "$CMD" = "docker" ]]; then
+    if [[ ! $(docker ps 2>/dev/null) ]]; then
+      error "Your current user cant run docker without root priveleges"
+      exit 1
+    fi
+  elif ! command -v "$CMD" &>/dev/null; then
+    error "$CMD is not installed"
+    exit 1
+  fi
+done
+
+# Ugly date
+DATE=$(date +%Y_%m_%d_%H_%M_%S%Z)
+# Pretty date
+DATE2=$(date +%Y-%m-%d@%H:%M:%S%Z)
+
+# Toggle database backup
+declare BACKUPDB="${BACKUPDB:-OFF}"
+# Database username
+declare DBUSER="${DBUSER:-postgres}"
+declare DUMPPATH="${DUMPPATH:-$PWD}"
+# Name or path to database dump
+declare DUMPNAME="${DUMPNAME:-database-$DATE.dump}"
+# Path to archive
+declare ARCHIVEPATH="${ARCHIVEPATH:-$PWD}"
+# Name of archive
+declare ARCHIVENAME="${ARCHIVENAME:-database-$DATE.tar.gz}"
+# Databse container name
+declare CONTAINER="remnawave-db"
+# Check whether container with database is up
+CONTAINERUP=$(2>/dev/null docker inspect --format "{{.Name}}" "$CONTAINER")
+
+# Toggle panel config backup
+declare BACKUPCONFIG="${BACKUPCONFIG:-OFF}"
+# Path where to look for panel config
+declare CONFIGPATH="${CONFIGPATH:-/opt/remnawave}"
+# Path to archive with config backup
+declare ARCHIVEPATH2="${ARCHIVEPATH2:-$PWD}"
+# Archive name with config
+declare ARCHIVENAME2="${ARCHIVENAME2:-config-$DATE.tar.gz}"
+
+# Toggle github support
+declare GITHUB="${GITHUB:-OFF}"
+# Path to github repository
+declare REPOSITORY
+
+# Toggle backup everything
+declare ALL="${ALL:-OFF}"
+if [[ "${ALL^^}" = "ON" ]]; then
+  BACKUPDB="ON"
+  GITHUB="ON"
+  BACKUPCONFIG="ON"
+fi
+
+# Remove temporary files
+removeTemporary() {
+  rm -f "$DUMPPATH/$DUMPNAME"
+  rm -f "$ARCHIVEPATH/$ARCHIVENAME"
+  rm -f "$ARCHIVEPATH2/$ARCHIVENAME2"
+}
+
+# Exit immediately if any command below exits with non-zero exit code
+set -o "errexit"
+# If script fails or exits
+# Remove all temorary files
+trap "error 'Something went wrong. Removing temporary files...'; removeTemporary && exit 1" EXIT
+
+# If user wants to backup database
+if [[ "${BACKUPDB^^}" = "ON" ]]; then
+  # Check whether path to database dump is writeable
+  # And is a directory
+  if [[ ! -w "$DUMPPATH" && ! -d "$DUMPPATH" ]]; then
+    error "$DUMPPATH is either not writable or not a directory"
+    exit 1
+  # Check whether path to archive is writeable
+  # And is a directory
+  elif [[ ! -w "$ARCHIVEPATH" && ! -d "$ARCHIVEPATH" ]]; then
+    error "$ARCHIVEPATH is either not writable or not a directory"
+    exit 1
+  # Check whether container with database is up
+  elif [[ ! "${CONTAINERUP#*/}" == "$CONTAINER" ]]; then
+    error "Container \"$CONTAINER\" doesn't exists"
+    exit 1
+  fi
+
+  # Backup database
+  # Dump database
+  docker exec --tty "$CONTAINER" pg_dumpall --clean --username="$DBUSER" >"$DUMPPATH/$DUMPNAME"
+  # Add dump to .tar.gz archive
+  tar --create --gzip --file="$ARCHIVEPATH/$ARCHIVENAME" --directory "$DUMPPATH" "$DUMPNAME"
+  # Remove dump
+  rm -f "$DUMPPATH/$DUMPNAME"
+
+  info "Archive: \"$ARCHIVENAME\" created successfully"
+fi
+
+# If user wants to backup panel config
+if [[ "${BACKUPCONFIG^^}" = "ON" ]]; then
+  if [[ ! -d "$CONFIGPATH" && ! -e "$CONFIGPATH" ]]; then
+    error "$CONFIGPATH is either doesn't exist or not a directory"
+    exit 1
+  elif [[ ! -d "$ARCHIVEPATH2" && ! -e "$ARCHIVEPATH2" ]]; then
+    error "$ARCHIVEPATH2 is either doesn't exist or not a directory"
+    exit 1
+  fi
+  tar --create --gzip --file="$ARCHIVEPATH2/$ARCHIVENAME2" "$CONFIGPATH" 2>/dev/null
+  info "Archive: \"$ARCHIVENAME2\" created successfully"
+fi
+
+# If user wants to upload backup to github
+if [[ "${BACKUPDB^^}" == "ON" || "${BACKUPCONFIG^^}" == "ON" ]]; then
+  if [[ "${GITHUB^^}" = "ON" ]]; then
+    # Check whether user specified repository
+    if [[ -z "$REPOSITORY" ]]; then
+      error "Provide full path to your repository"
+      exit 1
+    # Check whether repository is writeable
+    # And is a directory
+    elif [[ ! -w "$REPOSITORY" && ! -d "$REPOSITORY" ]]; then
+      error "$REPOSITORY is either not writable or not a directory"
+      exit 1
+    fi
+    # Push changes to github
+    # If database backup is enabled
+    # Move archive with database to repository
+    if [[ "$BACKUPDB" == "ON" ]]; then
+      mv "$ARCHIVENAME" "$REPOSITORY"
+    fi
+    # If config backup is enabled
+    # Move archive with config to repository
+    if [[ "$BACKUPCONFIG" = "ON" ]]; then
+      mv "$ARCHIVENAME2" "$REPOSITORY"
+    fi
+    # Remove temporary files
+    removeTemporary
+    # Go to repository
+    cd "$REPOSITORY"
+    # Pull changes from remote repository before staging
+    git pull
+    # Stage, create commit and push changes to remote repository
+    git add .
+    git commit --message "$HOSTNAME backup: $DATE2"
+    git push
+    info "Backup uploaded to github"
+  fi
+fi
+
+# Disable trap
+trap "" EXIT
+
+# Success
+if [[ "${BACKUPDB^^}" == "ON" || "${BACKUPCONFIG^^}" == "ON" ]]; then
+  info "Remnawave backup successfully made at $DATE2"
+else
+  info "Seems like you haven't selected anything for backup"
+fi

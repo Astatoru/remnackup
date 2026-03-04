@@ -47,12 +47,12 @@ BACKUPDB=ON BACKUPCONFIG=ON bash /path/to/remnackup
 ```bash
 ALL=ON REPOSITORY=/path/to/repository bash /path/to/remnackup
 ```
-- Cronjob that backup everything everyday at 00:00 (`crontab -e`)
+- Cronjob that backs up everything everyday at 00:00 (`crontab -e`)
 ```bash
 0 0 * * * ALL=ON REPOSITORY=/path/to/repository bash /path/to/remnackup
 ```
 ### Usage with Github
-If you plan on backing up your settings to Github, you should do some preparations
+If you plan on backing up your archives to Github, you should do some preparations
 - Create your own repository
 - If you want, you can login into your Github account on your VPS and entierly skip fine-grained token setup, but with token it's way more secure
 - Create Fine-grained token:

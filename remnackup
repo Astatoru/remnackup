@@ -46,7 +46,7 @@ declare ROOT=${ROOT:-OFF}
 if [[ "${ROOT^^}" = "OFF" ]]; then
   # Don't start the script if it run under a root
   if ((EUID == 0)); then
-    error "Running this script as root is discouraged, but you can disable this check using \"\$ROOT\" variable"
+    error "Running the script as root is discouraged, but you can disable this check using \"\$ROOT\" variable"
     exit 1
   fi
 fi

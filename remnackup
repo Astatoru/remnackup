@@ -91,14 +91,14 @@ checkRoot() {
 
 checkDependencies() {
   for CMD in "${DEPENDENCIES[@]}"; do
-    if [[ "$CMD" = "docker" ]]; then
+    if ! command -v "$CMD" &>/dev/null; then
+      error "$CMD is not installed"
+      exit 1
+    elif [[ "$CMD" = "docker" ]]; then
       if ! docker ps &>/dev/null; then
         error "Your current user cannot run docker without root priveleges"
         exit 1
       fi
-    elif ! command -v "$CMD" &>/dev/null; then
-      error "$CMD is not installed"
-      exit 1
     fi
   done
 }

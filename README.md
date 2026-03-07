@@ -65,7 +65,7 @@ If you plan on backing up your archives to Github, you should do some preparatio
 - Ssh into your VPS
 - Install `gh` (Package name can be different between distributions)
 ```bash
-apt install gh
+sudo apt install gh
 ```
 - Login into you github account using **fine-grained token**
 ```

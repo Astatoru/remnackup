@@ -308,7 +308,7 @@ uploadToGithub() {
       git add .
       git commit --message "$HOSTNAME backup: $DATE2"
       git push
-      info "Backup uploaded to github"
+      info "Backup successfully uploaded to github"
     fi
   fi
 }

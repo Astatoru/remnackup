@@ -1,5 +1,5 @@
 # Use at your own risk!
-**The script hasn't been battle tested yet!**
+**The script hasn't been battle tested yet and can contain bugs!**
 ### Usage
 - Clone the repository
 ```bash

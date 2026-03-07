@@ -38,13 +38,13 @@ sudo gpasswd -a username docker
 ```bash
 ./remnackup --backupdb
 ```
-- Backup everything and push to remote repository
+- Backup everything and push to remote repository (with custom path to config)
 ```bash
-./remnackup --all --repository "/path/to/repository"
+./remnackup --all --configpath="/path/to/config" --repository="/path/to/repository"
 ```
-- Cronjob that backs up everything everyday at 00:00 (`crontab -e`)
+- Cronjob that backs up everything everyday at 00:00
 ```bash
-0 0 * * * ./remnackup --all --repository "/path/to/repository"
+0 0 * * * /path/to/remnackup --all --repository="/path/to/repository"
 ```
 ### Usage with Github
 If you plan on backing up your archives to Github, you should do some preparations

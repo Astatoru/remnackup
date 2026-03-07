@@ -289,16 +289,13 @@ uploadToGithub() {
       if [[ ! -w "$REPOSITORY" && ! -d "$REPOSITORY" ]]; then
         error "$REPOSITORY is either not writable or not a directory"
         exit 1
-      fi
-      # Push changes to github
       # If database backup is enabled
       # Move archive with database to repository
-      if [[ "$BACKUPDB" = "ON" ]]; then
+      elif [[ "$BACKUPDB" = "ON" ]]; then
         mv "$ARCHIVENAME" "$REPOSITORY"
-      fi
       # If config backup is enabled
       # Move archive with config to repository
-      if [[ "$BACKUPCONFIG" = "ON" ]]; then
+      elif [[ "$BACKUPCONFIG" = "ON" ]]; then
         mv "$ARCHIVENAME2" "$REPOSITORY"
       fi
       # Remove temporary files

@@ -57,7 +57,7 @@ declare GITHUB="${GITHUB:-OFF}"
 declare REPOSITORY
 
 # Display error messages
-error() {
+function error() {
   local MESSAGE="$1"
   # Check if stderr is in interactive mode
   if [[ -t 2 ]]; then
@@ -68,7 +68,7 @@ error() {
 }
 
 # Display info messages
-info() {
+function info() {
   local MESSAGE="$1"
   # Check if stdout is in interactive mode
   if [[ -t 1 ]]; then
@@ -79,7 +79,7 @@ info() {
 }
 
 # Display help message
-help() {
+function help() {
   cat <<EOF
 Usage:
   ${0##*/} [OPTION]
@@ -107,14 +107,14 @@ EOF
 }
 
 # Display help if no options or arguments were provided
-checkOpts() {
+function checkOpts() {
   if (($# == 0)); then
     help
   fi
 }
 
 # Parse script options
-parseOpts() {
+function parseOpts() {
   local ARGS
   ARGS=$(getopt --longoptions "help,root,all,backupdb,dbuser:,dumppath:,dumpname:,dumparchpath:,dumparchname:,container:,backupconfig,configpath:,configarchpath:,configarchname:,github,repository:" --options "" --name $'\033[01;31mERROR\033[0m' -- "$@") || exit 1
   eval set -- "$ARGS"
@@ -194,7 +194,7 @@ parseOpts() {
 }
 
 # Check if the script is run as root
-checkRoot() {
+function checkRoot() {
   # If "--root" option is used
   # Skip the check
   if [[ "$ROOT" = "OFF" ]]; then
@@ -206,7 +206,7 @@ checkRoot() {
 }
 
 # Check if dependencies are installed
-checkDependencies() {
+function checkDependencies() {
   for CMD in "${DEPENDENCIES[@]}"; do
     if ! command -v "$CMD" &>/dev/null; then
       error "$CMD is not installed"
@@ -223,14 +223,14 @@ checkDependencies() {
 }
 
 # Remove temporary files
-removeTemporary() {
+function removeTemporary() {
   rm -f "$DUMPPATH/$DUMPNAME"
   rm -f "$ARCHIVEPATH/$ARCHIVENAME"
   rm -f "$ARCHIVEPATH2/$ARCHIVENAME2"
 }
 
 # Backup database
-backupDatabase() {
+function backupDatabase() {
   # Check if container with database is up
   local CONTAINERUP
   CONTAINERUP=$(2>/dev/null docker inspect --format "{{.Name}}" "$CONTAINER" || true)
@@ -261,7 +261,7 @@ backupDatabase() {
 }
 
 # Backup config
-backupConfig() {
+function backupConfig() {
   if [[ "$BACKUPCONFIG" = "ON" ]]; then
     # Check if config path exists and is a directory
     if [[ ! -d "$CONFIGPATH" && ! -e "$CONFIGPATH" ]]; then
@@ -280,7 +280,7 @@ backupConfig() {
 }
 
 # Upload archives to Github repository
-uploadToGithub() {
+function uploadToGithub() {
   # Check if user selected anything for backup
   if [[ "$BACKUPDB" = "ON" || "$BACKUPCONFIG" = "ON" ]]; then
     if [[ "$GITHUB" = "ON" ]]; then
@@ -314,7 +314,7 @@ uploadToGithub() {
 }
 
 # Message at the end of the script
-endMessage() {
+function endMessage() {
   if [[ "$BACKUPDB" = "ON" || "$BACKUPCONFIG" = "ON" ]]; then
     info "Remnawave backup successfully made at $DATE2"
   else
@@ -323,7 +323,7 @@ endMessage() {
 }
 
 # Main function
-main() {
+function main() {
   checkOpts "$@"
   parseOpts "$@"
   checkRoot

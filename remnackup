@@ -59,7 +59,7 @@ declare REPOSITORY
 # Display error messages
 error() {
   local MESSAGE="$1"
-  # Check whether stderr is in interactive mode
+  # Check if stderr is in interactive mode
   if [[ -t 2 ]]; then
     >&2 printf "%b\n" "\033[01;31mERROR\033[0m: $MESSAGE"
   else
@@ -70,7 +70,7 @@ error() {
 # Display info messages
 info() {
   local MESSAGE="$1"
-  # Check whether stdout is in interactive mode
+  # Check if stdout is in interactive mode
   if [[ -t 1 ]]; then
     printf "%b\n" "\033[01;34mINFO\033[0m: $MESSAGE"
   else
@@ -193,7 +193,7 @@ parseOpts() {
   done
 }
 
-# Check whether the script is run as root
+# Check if the script is run as root
 checkRoot() {
   # If "--root" option is used
   # Skip the check
@@ -205,7 +205,7 @@ checkRoot() {
   fi
 }
 
-# Check whether dependencies are installed
+# Check if dependencies are installed
 checkDependencies() {
   for CMD in "${DEPENDENCIES[@]}"; do
     if ! command -v "$CMD" &>/dev/null; then
@@ -231,21 +231,21 @@ removeTemporary() {
 
 # Backup database
 backupDatabase() {
-  # Check whether container with database is up
+  # Check if container with database is up
   local CONTAINERUP
   CONTAINERUP=$(2>/dev/null docker inspect --format "{{.Name}}" "$CONTAINER" || true)
   if [[ "$BACKUPDB" = "ON" ]]; then
-    # Check whether path to database dump is writeable
+    # Check if path to database dump is writeable
     # And is a directory
     if [[ ! -w "$DUMPPATH" && ! -d "$DUMPPATH" ]]; then
       error "$DUMPPATH is either not writable or not a directory"
       exit 1
-    # Check whether path to archive is writeable
+    # Check if path to archive is writeable
     # And is a directory
     elif [[ ! -w "$ARCHIVEPATH" && ! -d "$ARCHIVEPATH" ]]; then
       error "$ARCHIVEPATH is either not writable or not a directory"
       exit 1
-    # Check whether container with database is up
+    # Check if container with database is up
     elif [[ ! "${CONTAINERUP#*/}" = "$CONTAINER" ]]; then
       error "Container \"$CONTAINER\" doesn't exists"
       exit 1
@@ -263,11 +263,11 @@ backupDatabase() {
 # Backup config
 backupConfig() {
   if [[ "$BACKUPCONFIG" = "ON" ]]; then
-    # Check whether config path exists and is a directory
+    # Check if config path exists and is a directory
     if [[ ! -d "$CONFIGPATH" && ! -e "$CONFIGPATH" ]]; then
       error "$CONFIGPATH is either doesn't exist or not a directory"
       exit 1
-    # Check whether path to archive is writeable
+    # Check if path to archive is writeable
     # And is a directory
     elif [[ ! -w "$ARCHIVEPATH2" && ! -d "$ARCHIVEPATH2" ]]; then
       error "$ARCHIVEPATH2 is either doesn't exist or not a directory"
@@ -281,12 +281,16 @@ backupConfig() {
 
 # Upload archives to Github repository
 uploadToGithub() {
-  # Check whether user selected anything for backup
+  # Check if user selected anything for backup
   if [[ "$BACKUPDB" = "ON" || "$BACKUPCONFIG" = "ON" ]]; then
     if [[ "$GITHUB" = "ON" ]]; then
-      # Check whether repository is writeable
+      # Check if user provided path to repository
+      if [[ -z "$REPOSITORY" ]]; then
+        error "Provide full path to your repository"
+        exit 1
+      # Check if repository is writeable
       # And is a directory
-      if [[ ! -w "$REPOSITORY" && ! -d "$REPOSITORY" ]]; then
+      elif [[ ! -w "$REPOSITORY" && ! -d "$REPOSITORY" ]]; then
         error "$REPOSITORY is either not writable or not a directory"
         exit 1
       # If database backup is enabled

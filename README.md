@@ -13,7 +13,7 @@ chmod +x /path/to/remnackup
 ```bash
 sudo gpasswd -a username docker
 ```
-### Variables
+### Options
 
 | Option             | Description                                                                           | Default Value           |
 | ------------------ | ------------------------------------------------------------------------------------- | ----------------------- |

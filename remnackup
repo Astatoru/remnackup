@@ -40,7 +40,7 @@ declare ARCHIVEPATH="${ARCHIVEPATH:-$PWD}"
 # Name of archive
 declare ARCHIVENAME="${ARCHIVENAME:-database-$DATE.tar.gz}"
 # Databse container name
-declare CONTAINER="remnawave-db"
+declare CONTAINER="${CONTAINER:-remnawave-db}"
 
 # Toggle panel config backup
 declare BACKUPCONFIG="${BACKUPCONFIG:-OFF}"

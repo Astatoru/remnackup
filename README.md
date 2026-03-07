@@ -13,43 +13,38 @@ chmod +x /path/to/remnackup
 ```bash
 sudo gpasswd -a username docker
 ```
-- Follow the instructions below
 ### Variables
-`ON` and `OFF` values are case insensitive
 
-| Variable       | Description                                                                             | Default Value           |
-| -------------- | --------------------------------------------------------------------------------------- | ----------------------- |
-| `ROOT`         | Toggle support for running the script as root or sudo (not recommended)                 | `OFF`                   |
-| `BACKUPDB`     | Responsible for turning `ON` and `OFF` Remnawave's database backup                      | `OFF`                   |
-| `DBUSER`       | Remnawave's database user (check yours in `.env`)                                       | `postgres`              |
-| `DUMPPATH`     | Path where database dump will be created                                                | Current directory       |
-| `DUMPNAME`     | Dump file name                                                                          | `database-$DATE.dump`   |
-| `ARCHIVEPATH`  | Path where archive with dump file will be created                                       | Current directory       |
-| `ARCHIVENAME`  | Name of the archive with dump file                                                      | `database-$DATE.tar.gz` |
-| `CONTAINER`    | Name of the docker container responsible for database                                   | `remnawave-db`          |
-| `BACKUPCONFIG` | Responsible for turning `ON` and `OFF` Remnawave's config backup                        | `OFF`                   |
-| `CONFIGPATH`   | Path to config directory                                                                | `/opt/remnawave`        |
-| `ARCHIVEPATH2` | Path where archive with config files will be created                                    | Current directory       |
-| `ARCHIVENAME2` | Name of the archive with config files                                                   | `config-$DATE.tar.gz`   |
-| `GITHUB`       | Responsible for turning `ON` and `OFF` ability to push your backup to Github repository | `OFF`                   |
-| `REPOSITORY`   | Path to your local github repository                                                    | Empty                   |
-| `ALL`          | Enable `BACKUPDB`, `BACKUPCONFIG`, `GITHUB`                                             | `OFF`                   |
+| Option             | Description                                                                           | Default Value           |
+| ------------------ | ------------------------------------------------------------------------------------- | ----------------------- |
+| `--help`           | Show help message                                                                     | -                       |
+| `--root`           | Allow running the script as root or sudo (not recommended)                            | -                       |
+| `--all`            | Alternative for using the `--backupdb --backupconfig --github` options simultaneously | -                       |
+| `--backupdb`       | Backup Remnawave's database                                                           | -                       |
+| `--dbuser`         | Database user (check yours in `.env`)                                                 | `postgres`              |
+| `--dumppath`       | Path to where to dump database                                                        | Current directory       |
+| `--dumpname`       | Database dump file's path                                                             | `database-$DATE.dump`   |
+| `--dumparchpath`   | Path where to create .tar.gz archive with database dump                               | Current directory       |
+| `--dumparchname`   | Name of the archive with database dump                                                | `database-$DATE.tar.gz` |
+| `--container`      | Name of the docker container responsible for Remnawave's database                     | `remnawave-db`          |
+| `--backupconfig`   | Backup Remnawave's config                                                             | -                       |
+| `--configpath`     | Path to config                                                                        | `/opt/remnawave`        |
+| `--configarchpath` | Path where to create .tar.gz archive with config                                      | Current directory       |
+| `--configarchname` | Name of the archive with config backup                                                | `config-$DATE.tar.gz`   |
+| `--github`         | Upload archive(s) with backup to Github repository                                    | -                       |
+| `--repository`     | Path to your repository                                                               | -                       |
 ### Examples
 - Backup Remnawave's database to current directory
 ```bash
-BACKUPDB=ON bash /path/to/remnackup
-```
-- Backup Remnawave's database and config to current directory
-```bash
-BACKUPDB=ON BACKUPCONFIG=ON bash /path/to/remnackup
+./remnackup --backupdb
 ```
 - Backup everything and push to remote repository
 ```bash
-ALL=ON REPOSITORY=/path/to/repository bash /path/to/remnackup
+./remnackup --all --repository "/path/to/repository"
 ```
 - Cronjob that backs up everything everyday at 00:00 (`crontab -e`)
 ```bash
-0 0 * * * ALL=ON REPOSITORY=/path/to/repository bash /path/to/remnackup
+0 0 * * * ./remnackup --all --repository "/path/to/repository"
 ```
 ### Usage with Github
 If you plan on backing up your archives to Github, you should do some preparations
@@ -103,7 +98,7 @@ docker compose --file /path/to/compose.yaml up --detach remnawave-db
 tar --extract --file /path/to/database-$DATE.tar.gz
 ```
 - Restore database
-    - Replace `--user "postgres"` and `--dbname "postgres"` according to your `.env` file (`postgres` value is default)
+    - Replace `--user "postgres"` and `--dbname "postgres"` according to your `.env` file (`postgres` values are default)
 ```bash
 docker exec remnawave-db psql --user "postgres" --dbname "postgres" < /path/to/database-$DATE.dump
 ```

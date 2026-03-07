@@ -26,8 +26,6 @@ DATE2=$(date +%Y-%m-%d@%H:%M:%S%Z)
 declare -a DEPENDENCIES="(docker tar gzip)"
 # Toggle root support
 declare ROOT="${ROOT:-OFF}"
-# Toggle backup everything
-declare ALL="${ALL:-OFF}"
 
 # Toggle database backup
 declare BACKUPDB="${BACKUPDB:-OFF}"
@@ -80,20 +78,141 @@ info() {
   fi
 }
 
+# Display help message
+help() {
+  cat <<EOF
+Usage:
+  ${0##*/} [OPTION]
+
+Options:
+  --help                Show this help message
+  --root                Allow running the script as root or sudo (not recommended)
+  --all                 Alternative for using the --backupdb --backupconfig --github options simultaneously
+  --backupdb            Backup Remnawave's database
+  --dbuser              Database user (Default: postgres)
+  --dumppath            Path to where to dump database (Default: current directory)
+  --dumpname            Database dump file's path (Default: current directory)
+  --dumparchpath        Path where to create .tar.gz archive with database dump (Default: current directory)
+  --dumparchname        Name of the archive with database dump (Default: $ARCHIVENAME)
+  --container           Name of the docker container responsible for Remnawave's database (Default: remnawave-db)
+  --backupconfig        Backup Remnawave's config
+  --configpath          Path to config (Default: /opt/remnawave)
+  --configarchpath      Path where to create .tar.gz archive with config (Default: current directory)
+  --configarchname      Name of the archive with config backup (Default: $ARCHIVENAME2)
+  --github              Upload archive(s) with backup to Github repository
+  --repository          Path to your repository (Default: empty)
+EOF
+  trap "" EXIT
+  exit 0
+}
+
+# Display help if no options or arguments were provided
+checkOpts() {
+  if (($# == 0)); then
+    help
+  fi
+}
+
+# Parse script options
+parseOpts() {
+  local ARGS
+  ARGS=$(getopt --longoptions "help,root,all,backupdb,dbuser:,dumppath:,dumpname:,dumparchpath:,dumparchname:,container:,backupconfig,configpath:,configarchpath:,configarchname:,github,repository:" --options "" --name $'\033[01;31mERROR\033[0m' -- "$@") || exit 1
+  eval set -- "$ARGS"
+
+  for ARG in "$@"; do
+    case "$ARG" in
+    --help)
+      help
+      ;;
+    --root)
+      ROOT="ON"
+      shift
+      ;;
+    --all)
+      BACKUPDB="ON"
+      BACKUPCONFIG="ON"
+      GITHUB="ON"
+      shift
+      ;;
+    --backupdb)
+      BACKUPDB="ON"
+      shift
+      ;;
+    --dbuser)
+      DBUSER="$2"
+      shift 2
+      ;;
+    --dumppath)
+      DUMPPATH="$2"
+      shift 2
+      ;;
+    --dumpname)
+      DUMPNAME="$2"
+      shift 2
+      ;;
+    --dumparchpath)
+      ARCHIVEPATH="$2"
+      shift 2
+      ;;
+    --dumparchname)
+      ARCHIVENAME="$2"
+      shift 2
+      ;;
+    --container)
+      CONTAINER="$2"
+      shift 2
+      ;;
+    --backupconfig)
+      BACKUPCONFIG="ON"
+      shift
+      ;;
+    --configpath)
+      CONFIGPATH="$2"
+      shift 2
+      ;;
+    --configarchpath)
+      ARCHIVEPATH2="$2"
+      shift 2
+      ;;
+    --configarchname)
+      ARCHIVENAME2="$2"
+      shift 2
+      ;;
+    --github)
+      GITHUB="ON"
+      shift
+      ;;
+    --repository)
+      REPOSITORY="$2"
+      shift 2
+      ;;
+    --)
+      shift
+      ;;
+    esac
+  done
+}
+
+# Check whether the script is run as root
 checkRoot() {
-  if [[ "${ROOT^^}" = "OFF" ]]; then
+  # If "--root" option is used
+  # Skip the check
+  if [[ "$ROOT" = "OFF" ]]; then
     if ((EUID == 0)); then
-      error "Running the script as root is discouraged, but you can disable this check using \"\$ROOT\" variable"
+      error "Running the script as root is discouraged, but you can disable this check using \"--root\" option"
       exit 1
     fi
   fi
 }
 
+# Check whether dependencies are installed
 checkDependencies() {
   for CMD in "${DEPENDENCIES[@]}"; do
     if ! command -v "$CMD" &>/dev/null; then
       error "$CMD is not installed"
       exit 1
+    # If docker cannot run as root
+    # Exit the script
     elif [[ "$CMD" = "docker" ]]; then
       if ! docker ps &>/dev/null; then
         error "Your current user cannot run docker without root priveleges"
@@ -103,14 +222,6 @@ checkDependencies() {
   done
 }
 
-checkEnableAll() {
-  if [[ "${ALL^^}" = "ON" ]]; then
-    BACKUPDB="ON"
-    GITHUB="ON"
-    BACKUPCONFIG="ON"
-  fi
-}
-
 # Remove temporary files
 removeTemporary() {
   rm -f "$DUMPPATH/$DUMPNAME"
@@ -118,17 +229,12 @@ removeTemporary() {
   rm -f "$ARCHIVEPATH2/$ARCHIVENAME2"
 }
 
-success() {
-  if [[ "${BACKUPDB^^}" == "ON" || "${BACKUPCONFIG^^}" == "ON" ]]; then
-    info "Remnawave backup successfully made at $DATE2"
-  else
-    info "Seems like you haven't selected anything for backup"
-  fi
-}
-
+# Backup database
 backupDatabase() {
-  local CONTAINERUP=$(2>/dev/null docker inspect --format "{{.Name}}" "$CONTAINER")
-  if [[ "${BACKUPDB^^}" = "ON" ]]; then
+  # Check whether container with database is up
+  local CONTAINERUP
+  CONTAINERUP=$(2>/dev/null docker inspect --format "{{.Name}}" "$CONTAINER" || true)
+  if [[ "$BACKUPDB" = "ON" ]]; then
     # Check whether path to database dump is writeable
     # And is a directory
     if [[ ! -w "$DUMPPATH" && ! -d "$DUMPPATH" ]]; then
@@ -140,7 +246,7 @@ backupDatabase() {
       error "$ARCHIVEPATH is either not writable or not a directory"
       exit 1
     # Check whether container with database is up
-    elif [[ ! "${CONTAINERUP#*/}" == "$CONTAINER" ]]; then
+    elif [[ ! "${CONTAINERUP#*/}" = "$CONTAINER" ]]; then
       error "Container \"$CONTAINER\" doesn't exists"
       exit 1
     fi
@@ -154,37 +260,40 @@ backupDatabase() {
   fi
 }
 
+# Backup config
 backupConfig() {
-  if [[ "${BACKUPCONFIG^^}" = "ON" ]]; then
+  if [[ "$BACKUPCONFIG" = "ON" ]]; then
+    # Check whether config path exists and is a directory
     if [[ ! -d "$CONFIGPATH" && ! -e "$CONFIGPATH" ]]; then
       error "$CONFIGPATH is either doesn't exist or not a directory"
       exit 1
-    elif [[ ! -d "$ARCHIVEPATH2" && ! -e "$ARCHIVEPATH2" ]]; then
+    # Check whether path to archive is writeable
+    # And is a directory
+    elif [[ ! -w "$ARCHIVEPATH2" && ! -d "$ARCHIVEPATH2" ]]; then
       error "$ARCHIVEPATH2 is either doesn't exist or not a directory"
       exit 1
     fi
+    # Create archive with config backup
     tar --create --gzip --file="$ARCHIVEPATH2/$ARCHIVENAME2" "$CONFIGPATH" 2>/dev/null
     info "Archive: \"$ARCHIVENAME2\" created successfully"
   fi
 }
 
+# Upload archives to Github repository
 uploadToGithub() {
-  if [[ "${BACKUPDB^^}" == "ON" || "${BACKUPCONFIG^^}" == "ON" ]]; then
-    if [[ "${GITHUB^^}" = "ON" ]]; then
-      # Check whether user specified repository
-      if [[ -z "$REPOSITORY" ]]; then
-        error "Provide full path to your repository"
-        exit 1
+  # Check whether user selected anything for backup
+  if [[ "$BACKUPDB" = "ON" || "$BACKUPCONFIG" = "ON" ]]; then
+    if [[ "$GITHUB" = "ON" ]]; then
       # Check whether repository is writeable
       # And is a directory
-      elif [[ ! -w "$REPOSITORY" && ! -d "$REPOSITORY" ]]; then
+      if [[ ! -w "$REPOSITORY" && ! -d "$REPOSITORY" ]]; then
         error "$REPOSITORY is either not writable or not a directory"
         exit 1
       fi
       # Push changes to github
       # If database backup is enabled
       # Move archive with database to repository
-      if [[ "$BACKUPDB" == "ON" ]]; then
+      if [[ "$BACKUPDB" = "ON" ]]; then
         mv "$ARCHIVENAME" "$REPOSITORY"
       fi
       # If config backup is enabled
@@ -207,19 +316,35 @@ uploadToGithub() {
   fi
 }
 
+# Message at the end of the script
+endMessage() {
+  if [[ "$BACKUPDB" = "ON" || "$BACKUPCONFIG" = "ON" ]]; then
+    info "Remnawave backup successfully made at $DATE2"
+  else
+    info "Seems like you haven't selected anything for backup"
+  fi
+}
+
 # Main function
 main() {
-  set -o "errexit"
-  trap "error 'Something went wrong. Removing temporary files...'; removeTemporary && exit 1" EXIT
+  checkOpts "$@"
+  parseOpts "$@"
   checkRoot
   checkDependencies
-  checkEnableAll
   backupDatabase
   backupConfig
   uploadToGithub
-  success
-  trap "" EXIT
+  endMessage
 }
+
+# Stop script execution immediately
+# If any command below fails
+set -o "errexit"
+# Throw an error and remove temporary files on exit
+trap "error 'Something went wrong. Removing temporary files...'; removeTemporary && exit 1" EXIT
 
 # Execute main function
 main "$@"
+
+# Disable trap
+trap "" EXIT

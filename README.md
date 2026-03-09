@@ -13,7 +13,7 @@ chmod +x /path/to/remnackup
 ```bash
 sudo gpasswd -a username docker
 ```
-- Create symlink to the script inside `/usr/local/bin` directory, so you can use `remnackup` without specifying full path to it (optional)
+- Create symlink to the script inside `/usr/local/bin` directory so you can use `remnackup` without specifying full path to it (optional)
 ```bash
 sudo ln -s /full/path/to/remnackup /usr/local/bin/remnackup
 ```

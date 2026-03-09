@@ -246,6 +246,8 @@ function removeTemporary() {
   rm -f "$DUMPPATH/$DUMPNAME"
   rm -f "$ARCHIVEPATH/$ARCHIVENAME"
   rm -f "$ARCHIVEPATH2/$ARCHIVENAME2"
+  rm -f "$REPOSITORY/$ARCHIVENAME"
+  rm -f "$REPOSITORY/$ARCHIVENAME2"
 }
 
 # Backup database
@@ -314,11 +316,9 @@ function uploadToGithub() {
         exit 1
       fi
       # Move archive with database to repository
-      mv "$ARCHIVENAME" "$REPOSITORY" &>/dev/null
+      mv "$ARCHIVEPATH/$ARCHIVENAME" "$REPOSITORY" &>/dev/null
       # Move archive with config to repository
-      mv "$ARCHIVENAME2" "$REPOSITORY" &>/dev/null
-      # Remove temporary files
-      removeTemporary
+      mv "$ARCHIVEPATH2/$ARCHIVENAME2" "$REPOSITORY" &>/dev/null
       # Go to repository
       cd "$REPOSITORY"
       # Pull changes from remote repository before staging

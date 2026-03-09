@@ -116,7 +116,26 @@ function checkOpts() {
 # Parse script options
 function parseOpts() {
   local ARGS
-  ARGS=$(getopt --longoptions "help,root,all,backupdb,dbuser:,dumppath:,dumpname:,dumparchpath:,dumparchname:,container:,backupconfig,configpath:,configarchpath:,configarchname:,github,repository:" --options "" --name $'\033[01;31mERROR\033[0m' -- "$@") || exit 1
+  ARGS=$(getopt \
+    --longoptions "help,
+                   root,
+                   all,
+                   backupdb,
+                   dbuser:,
+                   dumppath:,
+                   dumpname:,
+                   dumparchpath:,
+                   dumparchname:,
+                   container:,
+                   backupconfig,
+                   configpath:,
+                   configarchpath:,
+                   configarchname:,
+                   github,
+                   repository:" \
+    --options "" \
+    --name $'\033[01;31mERROR\033[0m' \
+    -- "$@") || exit 1
   eval set -- "$ARGS"
 
   for ARG in "$@"; do

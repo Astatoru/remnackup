@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # vim:ft=bash
 # Author: Astatoru (https://github.com/Astatoru)
-# Description: A simple script that backs up your Remnawave's database and config and uploads it to Github repository
+# Description: A simple script that backs up your Remnawave database and config and uploads it to Github repository
 # Dependencies: docker: Database backup
 #               tar: Compression to .tar.gz
 #               gzip: Compression to .tar.gz

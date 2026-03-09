@@ -23,7 +23,7 @@ sudo ln -s /full/path/to/remnackup /usr/local/bin/remnackup
 | ------------------ | ------------------------------------------------------------------------------------- | ----------------------- |
 | `--help`           | Show help message                                                                     | -                       |
 | `--root`           | Allow running the script as root or sudo (not recommended)                            | -                       |
-| `--all`            | An alternative for using the --backupdb, --backupconfig, and --github options simultaneously | -                       |
+| `--all`            | An alternative for using the `--backupdb`, `--backupconfig`, and `--github` options simultaneously | -                       |
 | `--backupdb`       | Backup Remnawave's database                                                           | -                       |
 | `--dbuser`         | Database user (check yours in `.env`)                                                 | `postgres`              |
 | `--dumppath`       | Path where to dump database                                                           | Current directory       |

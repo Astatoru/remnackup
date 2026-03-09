@@ -9,7 +9,7 @@ git clone https://github.com/Astatoru/remnackup.git
 ```bash
 chmod +x /path/to/remnackup
 ```
-- Add your current user to `docker` group, so you can run docker without root (optional)
+- Add your current user to the `docker` group so you can run Docker without root (optional)
 ```bash
 sudo gpasswd -a username docker
 ```
@@ -23,11 +23,11 @@ sudo ln -s /full/path/to/remnackup /usr/local/bin/remnackup
 | ------------------ | ------------------------------------------------------------------------------------- | ----------------------- |
 | `--help`           | Show help message                                                                     | -                       |
 | `--root`           | Allow running the script as root or sudo (not recommended)                            | -                       |
-| `--all`            | Alternative for using the `--backupdb --backupconfig --github` options simultaneously | -                       |
+| `--all`            | An alternative for using the --backupdb, --backupconfig, and --github options simultaneously | -                       |
 | `--backupdb`       | Backup Remnawave's database                                                           | -                       |
 | `--dbuser`         | Database user (check yours in `.env`)                                                 | `postgres`              |
-| `--dumppath`       | Path to where to dump database                                                        | Current directory       |
-| `--dumpname`       | Database dump file's path                                                             | `database-$DATE.dump`   |
+| `--dumppath`       | Path where to dump database                                                           | Current directory       |
+| `--dumpname`       | Database dump file's name                                                             | `database-$DATE.dump`   |
 | `--dumparchpath`   | Path where to create .tar.gz archive with database dump                               | Current directory       |
 | `--dumparchname`   | Name of the archive with database dump                                                | `database-$DATE.tar.gz` |
 | `--container`      | Name of the docker container responsible for Remnawave's database                     | `remnawave-db`          |
@@ -38,11 +38,11 @@ sudo ln -s /full/path/to/remnackup /usr/local/bin/remnackup
 | `--github`         | Upload archive(s) with backup to Github repository                                    | -                       |
 | `--repository`     | Path to your repository                                                               | -                       |
 ### Examples
-- Backup Remnawave's database to current directory
+- Backup Remnawave's database to the current directory
 ```bash
 ./remnackup --backupdb
 ```
-- Backup everything and push to remote repository (with custom path to config)
+- Backup everything and push to the remote repository (with a custom path to config)
 ```bash
 ./remnackup --all --configpath="/path/to/config" --repository="/path/to/repository"
 ```
@@ -51,10 +51,10 @@ sudo ln -s /full/path/to/remnackup /usr/local/bin/remnackup
 0 0 * * * /path/to/remnackup --all --repository="/path/to/repository"
 ```
 ### Usage with Github
-If you plan on backing up your archives to Github, you should do some preparations
+If you plan on backing up your archives to GitHub, you should do some preparation
 - Create your own repository
 - If you want, you can login into your Github account on your VPS and entierly skip fine-grained token setup, but with token it's way more secure
-- Create Fine-grained token:
+- Create a fine-grained token:
     - **Account** > **Settings** > **Developer Settings**
     - **Personal access tokens** > **Fine-grained tokens** > **Generate new token**
     - Set token name and description
@@ -76,7 +76,7 @@ gh auth login
     - **HTTPS**
     - **Paste an authentication token**
 - Paste your token
-- Configure `~/.gitconfig` (most likely not needed)
+- Configure your `~/.gitconfig` (most likely not needed)
 ```bash
 [credential "https://github.com"]
   helper = !/usr/bin/gh auth git-credential
@@ -88,7 +88,7 @@ gh auth login
 [init]
   defaultBranch = main
 ```
-### How to restore database
+### How to restore the database
 - Stop Remnawave
 ```bash
 docker compose --file /path/to/compose.yaml down
@@ -101,7 +101,7 @@ docker compose --file /path/to/compose.yaml up --detach remnawave-db
 ```bash
 tar --extract --file /path/to/database-$DATE.tar.gz
 ```
-- Restore database
+- Restore the database
     - Replace `--user "postgres"` and `--dbname "postgres"` according to your `.env` file (`postgres` values are default)
 ```bash
 docker exec remnawave-db psql --user "postgres" --dbname "postgres" < /path/to/database-$DATE.dump

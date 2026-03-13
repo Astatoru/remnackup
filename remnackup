@@ -243,11 +243,11 @@ function checkDependencies() {
 
 # Remove temporary files
 function removeTemporary() {
-  rm -f "$DUMPPATH/$DUMPNAME"
-  rm -f "$ARCHIVEPATH/$ARCHIVENAME"
-  rm -f "$ARCHIVEPATH2/$ARCHIVENAME2"
-  rm -f "$REPOSITORY/$ARCHIVENAME"
-  rm -f "$REPOSITORY/$ARCHIVENAME2"
+  rm -f "$DUMPPATH/$DUMPNAME" \
+    "$ARCHIVEPATH/$ARCHIVENAME" \
+    "$ARCHIVEPATH2/$ARCHIVENAME2" \
+    "$REPOSITORY/$ARCHIVENAME" \
+    "$REPOSITORY/$ARCHIVENAME2"
 }
 
 # Backup database
